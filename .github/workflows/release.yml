@@ -1,0 +1,99 @@
+name: Release
+
+# Runs when a version tag such as v0.1.0 is pushed. A release is only published
+# if every earlier step (format, vet, tests, builds, installer) succeeded.
+on:
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+*"]
+
+permissions:
+  contents: write
+
+env:
+  RESTIC_VERSION: "0.19.1"
+  RESTIC_ZIP_SHA256: "da948ad707ed690426473aaba2046cd61f8f90f6f0e7dab6be0d5796531de67d"
+
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the tag against VERSION and CHANGELOG
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart('v')
+          $file = (Get-Content VERSION -Raw).Trim()
+          if ($file -ne $version) { throw "Tag $version does not match the VERSION file ($file)" }
+          $log = Get-Content CHANGELOG.md -Raw
+          if ($log -notmatch "(?m)^## \[$([regex]::Escape($version))\]") { throw "CHANGELOG.md has no section for $version" }
+          "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install restic (for the integration tests; the build bundles the same pinned release)
+        shell: pwsh
+        run: |
+          $zip = Join-Path $env:RUNNER_TEMP 'restic.zip'
+          Invoke-WebRequest "https://github.com/restic/restic/releases/download/v$env:RESTIC_VERSION/restic_${env:RESTIC_VERSION}_windows_amd64.zip" -OutFile $zip
+          if ((Get-FileHash $zip -Algorithm SHA256).Hash.ToLower() -ne $env:RESTIC_ZIP_SHA256) { throw 'restic checksum mismatch' }
+          $dir = Join-Path $env:RUNNER_TEMP 'restic'
+          Expand-Archive $zip -DestinationPath $dir
+          $exe = (Get-ChildItem $dir -Filter 'restic*.exe' | Select-Object -First 1).FullName
+          "BH_TEST_RESTIC=$exe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --no-progress -y
+
+      - name: Ensure windres (embeds icon, manifest and version information)
+        shell: pwsh
+        run: |
+          if (-not (Get-Command windres -ErrorAction SilentlyContinue)) {
+            choco install mingw --no-progress -y
+            $w = Get-ChildItem 'C:\ProgramData\mingw64','C:\ProgramData\chocolatey\lib\mingw' -Recurse -Filter windres.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+            if (-not $w) { throw 'windres not found' }
+            Split-Path $w.FullName | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          }
+          windres --version | Select-Object -First 1
+
+      - name: UI smoke test
+        shell: pwsh
+        run: |
+          go build -o "$env:RUNNER_TEMP\uidev.exe" ./tools/uidev
+          $env:UIDEV_BIN = "$env:RUNNER_TEMP\uidev.exe"
+          node tools/uidev/smoke.mjs
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      - name: Build, test and package (gofmt, vet, go test, GUI, CLI, ZIP, installer, checksums)
+        shell: pwsh
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts\build.ps1 -Version $env:VERSION
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          if (-not (Test-Path "dist\BackupHarbor-$env:VERSION-setup.exe")) { throw 'installer was not built' }
+
+      - name: Compose release notes
+        shell: pwsh
+        run: |
+          $log = Get-Content CHANGELOG.md -Raw
+          $m = [regex]::Match($log, "(?ms)^## \[$([regex]::Escape($env:VERSION))\][^\r\n]*\r?\n(.*?)(?=^## \[|\z)")
+          $body = $m.Groups[1].Value.Trim()
+          $tmpl = (Get-Content .github/RELEASE_TEMPLATE.md -Raw).Replace('{{VERSION}}', $env:VERSION)
+          $tmpl = $tmpl -replace '(?s)<!--.*?-->', $body
+          Set-Content release-notes.md $tmpl -Encoding utf8
+
+      - name: Publish the release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $pre = if ($env:VERSION -match '-') { '--prerelease' } else { '' }
+          gh release create "${{ github.ref_name }}" `
+            "dist/BackupHarbor-$env:VERSION-setup.exe" `
+            "dist/BackupHarbor-$env:VERSION-win-x64.zip" `
+            "dist/BackupHarbor-$env:VERSION-SHA256SUMS.txt" `
+            --title "BackupHarbor $env:VERSION" --notes-file release-notes.md $pre
