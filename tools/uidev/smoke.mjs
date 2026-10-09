@@ -3,7 +3,7 @@
 //   node tools/uidev/smoke.mjs
 //
 // Environment: BH_TEST_RESTIC (restic.exe), UIDEV_BIN (built tools/uidev), EDGE (msedge.exe),
-// SHOTS_DIR (where screenshots go, default ./docs/screenshots when SHOTS=1).
+// SHOTS_DIR (where screenshots go, none unless set; the README screenshots come from the real app, not from this test).
 import { spawn, execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, existsSync, rmSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
