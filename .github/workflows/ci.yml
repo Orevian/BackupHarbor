@@ -1,0 +1,96 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  RESTIC_VERSION: "0.19.1"
+  # SHA-256 of restic_0.19.1_windows_amd64.zip as published in the restic release's SHA256SUMS.
+  RESTIC_ZIP_SHA256: "da948ad707ed690426473aaba2046cd61f8f90f6f0e7dab6be0d5796531de67d"
+
+jobs:
+  test-and-build:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install restic (for the integration tests; the build bundles the same pinned release)
+        shell: pwsh
+        run: |
+          $zip = Join-Path $env:RUNNER_TEMP 'restic.zip'
+          Invoke-WebRequest "https://github.com/restic/restic/releases/download/v$env:RESTIC_VERSION/restic_${env:RESTIC_VERSION}_windows_amd64.zip" -OutFile $zip
+          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
+          if ($hash -ne $env:RESTIC_ZIP_SHA256) { throw "restic checksum mismatch: $hash" }
+          $dir = Join-Path $env:RUNNER_TEMP 'restic'
+          Expand-Archive $zip -DestinationPath $dir
+          $exe = (Get-ChildItem $dir -Filter 'restic*.exe' | Select-Object -First 1).FullName
+          "BH_TEST_RESTIC=$exe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          & $exe version
+
+      - name: gofmt
+        shell: pwsh
+        run: |
+          $bad = gofmt -l cmd internal tools frontend
+          if ($bad) { $bad; throw 'gofmt: the files above are not formatted' }
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: go test (real restic, real Task Scheduler)
+        shell: pwsh
+        env:
+          BH_TEST_SCHEDULER: "1"
+        run: go test ./... -count=1 -v 2>&1 | Tee-Object test.log; if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      - name: Show skipped tests
+        shell: pwsh
+        run: |
+          $skipped = Select-String -Path test.log -Pattern '^\s*--- SKIP' 
+          if ($skipped) { "Skipped tests (these did NOT run):"; $skipped | ForEach-Object { $_.Line } } else { "No tests were skipped." }
+
+      - name: UI smoke test (real front end, back end and restic)
+        shell: pwsh
+        run: |
+          go build -o "$env:RUNNER_TEMP\uidev.exe" ./tools/uidev
+          $env:UIDEV_BIN = "$env:RUNNER_TEMP\uidev.exe"
+          node tools/uidev/smoke.mjs
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --no-progress -y
+
+      - name: Ensure windres (embeds icon, manifest and version information)
+        shell: pwsh
+        run: |
+          if (-not (Get-Command windres -ErrorAction SilentlyContinue)) {
+            choco install mingw --no-progress -y
+            $w = Get-ChildItem 'C:\ProgramData\mingw64','C:\ProgramData\chocolatey\lib\mingw' -Recurse -Filter windres.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+            if (-not $w) { throw 'windres not found' }
+            Split-Path $w.FullName | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          }
+          windres --version | Select-Object -First 1
+
+      - name: Build (GUI, CLI, distribution folder, installer, checksums)
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts\build.ps1 -SkipTests
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BackupHarbor-windows-x64
+          path: |
+            dist/*.zip
+            dist/*-setup.exe
+            dist/*SHA256SUMS.txt
+          if-no-files-found: error
