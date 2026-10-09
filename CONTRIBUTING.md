@@ -80,6 +80,10 @@ node tools\uidev\smoke.mjs        # set SHOTS_DIR to also save screenshots
 
 Note that global names in the front end must not collide with Wails (`window.go`, `window.runtime`, `window.wails`).
 
+## Screenshots
+
+The images in `screenshots/` (shown inline in `README.md`) are captures of the real `BackupHarbor.exe` window, not of the browser test. Take them from a built app with a throw-away lab: restic repositories on a `SUBST` drive so no personal paths or user names appear, one repository damaged on purpose and one missing so a failed, a partial and a not-run result are visible. Capture English and Turkish, and keep the file names `en-*.png` and `tr-*.png` that the README and `internal/version/repo_test.go` expect. Do not publish screenshots that show real repositories, host names or paths.
+
 ## Pull requests
 
 1. Fork, create a topic branch.
