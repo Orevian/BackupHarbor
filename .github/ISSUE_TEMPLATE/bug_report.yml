@@ -1,0 +1,50 @@
+name: Bug report
+description: Something does not work as documented
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting. **Never paste repository passwords, credential values or backup contents.**
+        Text from reports and logs is masked, but please review it before posting.
+  - type: input
+    id: version
+    attributes:
+      label: BackupHarbor version
+      description: Output of `bharbor --version`, or Settings > About in the app.
+    validations: {required: true}
+  - type: input
+    id: restic
+    attributes:
+      label: restic version
+      placeholder: "restic 0.19.1"
+    validations: {required: true}
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      placeholder: "Windows 11 23H2"
+    validations: {required: true}
+  - type: dropdown
+    id: frontend
+    attributes:
+      label: Where did it happen?
+      options: [Desktop app, bharbor command line, Scheduled task, Installer]
+    validations: {required: true}
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations: {required: true}
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Include the relevant (anonymised) part of config.yaml. Backend type matters (local, sftp, s3, ...).
+    validations: {required: true}
+  - type: textarea
+    id: output
+    attributes:
+      label: Output
+      description: The command output or the TXT report of the run. Use `bharbor run --verbose` for details.
+      render: text

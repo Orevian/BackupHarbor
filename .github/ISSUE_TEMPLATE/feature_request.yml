@@ -1,0 +1,20 @@
+name: Feature request
+description: Suggest an improvement
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Which problem do you want to solve?
+      description: Describe the situation rather than the solution.
+    validations: {required: true}
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like BackupHarbor to do?
+    validations: {required: true}
+  - type: textarea
+    id: proof
+    attributes:
+      label: How would the result prove something?
+      description: BackupHarbor only reports what was actually tested. What would be checked, and what would remain unproven?
