@@ -121,7 +121,7 @@ $defaults = @{
     'VERSION' = "0.1.0`n"
     'LICENSE' = "MIT License`n`nCopyright (c) $((Get-Date).Year) BackupHarbor contributors`n`nPermission is hereby granted, free of charge, to any person obtaining a copy`nof this software and associated documentation files (the `"Software`"), to deal`nin the Software without restriction, including without limitation the rights`nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell`ncopies of the Software, and to permit persons to whom the Software is`nfurnished to do so, subject to the following conditions:`n`nThe above copyright notice and this permission notice shall be included in all`ncopies or substantial portions of the Software.`n`nTHE SOFTWARE IS PROVIDED `"AS IS`", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR`nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,`nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE`nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER`nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,`nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE`nSOFTWARE.`n"
 }
-$mustExist = @('go.mod', 'go.sum', 'README.md', 'README.tr.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'SECURITY.md',
+$mustExist = @('go.mod', 'go.sum', 'README.md', 'screenshots/en-overview.png', 'screenshots/tr-overview.png', 'CHANGELOG.md', 'CONTRIBUTING.md', 'SECURITY.md',
     'docs/architecture.md', 'docs/configuration.md', 'docs/security.md', 'docs/report-schema.md', 'THIRD-PARTY-NOTICES.md',
     'scripts/build.ps1', 'installer/backupharbor.iss', 'build/windows/icon.ico', 'third_party/restic/PIN', 'third_party/restic/LICENSE',
     'frontend/index.html', 'cmd/bharbor/main.go', 'cmd/backupharbor/main.go') + @($defaults.Keys)
@@ -141,7 +141,7 @@ if ($missing.Count -gt 0) { Fail ("Required project files are missing and cannot
 # ---- what changed ------------------------------------------------------------------------------------
 $lines = @(Invoke-GitOut -c core.quotepath=off status --porcelain=v1 --untracked-files=all)
 # Files the project needs but .gitignore would hide are added explicitly (git add -f).
-$mustTrack = '^(go\.sum|VERSION|LICENSE|THIRD-PARTY-NOTICES\.md|third_party/.+|build/windows/.+|build/appicon\.png|frontend/.+|docs/.+|\.github/.+|installer/.+|scripts/.+|cmd/.+|internal/.+|tools/.+)$'
+$mustTrack = '^(go\.sum|VERSION|LICENSE|THIRD-PARTY-NOTICES\.md|third_party/.+|build/windows/.+|build/appicon\.png|frontend/.+|docs/.+|screenshots/.+|\.github/.+|installer/.+|scripts/.+|cmd/.+|internal/.+|tools/.+)$'
 $ignoredNeeded = @(Invoke-GitOut -c core.quotepath=off ls-files --others --ignored --exclude-standard | Where-Object { $_ -match $mustTrack -and $_ -notmatch '\.(exe|dll|syso|pem|pfx|key|test|out|log|pw|password)$' -and $_ -notmatch '(^|/)config\.yaml$' })
 $entries = @()
 foreach ($l in $lines) {
@@ -287,14 +287,14 @@ S '^docs/architecture\.md$' docs architecture 'architecture' 'add architecture a
 S '^docs/configuration\.md$' docs configuration 'configuration reference' 'add configuration reference' 'Every key, default and content rule type.'
 S '^docs/security\.md$' docs security 'security design' 'add security design' 'Protections, password source comparison and limits.'
 S '^docs/report-schema\.md$' docs schema 'report schema' 'document the report schema' 'backupharbor.run/1 with statuses and messages.'
-S '^README\.md$' docs readme 'English README' 'add English README' 'Problem, features, requirements, installation, CLI, security and limitations.'
-S '^README\.tr\.md$' docs readme 'Turkish README' 'add Turkish README' 'Turkish version of the README.'
+S '^screenshots/en-.+\.png$' docs screenshots 'English screenshots' 'add English screenshots shown in the README' 'Captured from the real BackupHarbor.exe window: overview, live verification, failed and partial result, report, targets, schedule, settings, light theme.'
+S '^screenshots/tr-.+\.png$' docs screenshots 'Turkish screenshots' 'add Turkish screenshots shown in the README' 'The same window with the Turkish interface.'
+S '^README\.md$' docs readme 'README' 'add bilingual README' 'English first, Turkish below; problem, features, screenshots, installation, CLI, security and limitations.'
+S '^README\.tr\.md$' docs readme 'separate Turkish README' 'add separate Turkish README' 'Superseded: the Turkish text now lives in README.md below the English text.'
 S '^CHANGELOG\.md$' docs changelog 'changelog' 'add changelog' 'Keep a Changelog format.'
 S '^CONTRIBUTING\.md$' docs contributing 'contributing guide' 'add contributing guide' 'Setup, layout, rules and pull requests.'
 S '^SECURITY\.md$' docs security 'security policy' 'add security policy' 'Private vulnerability reporting and scope.'
-S '^docs/screenshots/00-native-window\.png$' docs screenshots 'native window screenshot' 'add real native window screenshot' 'Captured from BackupHarbor.exe.'
-S '^docs/screenshots/README\.md$' docs screenshots 'screenshot notes' 'explain how the screenshots were made' 'Native window versus headless browser captures.'
-S '^docs/screenshots/.+\.png$' docs screenshots 'UI screenshots' 'add UI screenshots' 'Real captures of the interface in both languages and themes.'
+S '^docs/screenshots/.+$' docs screenshots 'old docs screenshots' 'replace docs screenshots with README screenshots' 'Superseded by the top-level screenshots folder, which the README shows inline.'
 S '^commit\.ps1$' chore tooling 'commit script' 'add commit script' 'Creates small meaningful commits without any co-author trailer.'
 
 # ---- message building ----------------------------------------------------------------------------------------
