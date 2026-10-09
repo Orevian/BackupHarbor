@@ -91,6 +91,23 @@ desktop shortcut and an optional PATH entry for `bharbor`. Uninstalling removes 
 the PATH entry the installer itself added and keeps your configuration and reports
 unless you explicitly agree to delete them.
 
+### SmartScreen and antivirus warnings
+
+Windows SmartScreen or your antivirus program may warn, block or quarantine `BackupHarbor-<version>-setup.exe`, `BackupHarbor.exe`, `bharbor.exe` or the bundled `restic.exe`. This does not by itself mean the files are malicious. The likely reasons are:
+
+- **The files are not code-signed.** Code-signing certificates cost money and BackupHarbor is a free open-source project, so Windows cannot identify the publisher. SmartScreen also judges new, rarely downloaded files by reputation, so every new release looks "unknown" until enough people have run it.
+- **The programs do things that heuristic scanners treat with suspicion**, although each is the product's purpose: they start other programs (restic) as child processes, read and write large numbers of files, delete the temporary restore folder, create a Windows Task Scheduler task, store passwords in Windows Credential Manager and, for the optional PATH entry, change an environment setting.
+- **Executables written in Go** are occasionally flagged by generic or machine-learning detections, and the same is true for restic, which is also a Go program that reads and decrypts large amounts of data.
+- The installer is an Inno Setup package, another format that unknown-publisher heuristics scrutinise.
+
+What you can do:
+
+1. Download only from the [official releases page](https://github.com/Orevian/BackupHarbor/releases) and compare the SHA-256 value of each file with `BackupHarbor-<version>-SHA256SUMS.txt` (`Get-FileHash .\file -Algorithm SHA256`). If it differs, do not run the file.
+2. The `restic.exe` inside the package is the unmodified official release; you can compare it with the checksum published by the [restic project](https://github.com/restic/restic/releases) for the version in `third_party/restic/PIN`.
+3. Or read the source and build it yourself with `scripts\build.ps1`; nothing is downloaded at run time and the repository contains no executables.
+4. If SmartScreen shows "Windows protected your PC", choose **More info** and then **Run anyway** only after the checksum matched. If your antivirus quarantined a file whose checksum matched, restore it from quarantine or report the detection to the vendor as a false positive; if you add an exclusion, limit it to the BackupHarbor installation folder rather than a whole drive.
+5. If you are unsure, do not run it. Nobody should lower their protection because a README asked them to.
+
 ## Quick start
 
 Command line:
@@ -188,6 +205,16 @@ Scheduler. A browser-driven UI smoke test lives in `tools/uidev` (see
 - A file that parses or opens does not prove the application using it will work; PDF checks are structural only.
 - The binaries are not code-signed, so Windows SmartScreen may warn on first start.
 - The screenshots in this README were taken from the real `BackupHarbor.exe` window on Windows 11 while it verified a throw-away set of restic repositories on a neutral drive letter. One of those repositories was damaged on purpose and one does not exist, to show a failed and a not-run result; the data is test data, not a real backup. The date fields on the Reports page follow the language of Windows, not the language of BackupHarbor.
+
+## Disclaimer
+
+BackupHarbor is provided "as is", without warranty of any kind, under the terms of the [MIT licence](LICENSE); the authors and contributors are not liable for any damage, data loss, downtime or other consequence of using it or of the warnings, results and reports it produces.
+
+- A passed result means only that the listed checks succeeded at that moment. It does not prove that your applications will work with the restored data, that every file is intact, or that future backups will succeed. BackupHarbor is a supplement to, not a replacement for, a sound backup strategy (several copies, an off-site copy, regular manual spot checks).
+- Verification restores real data to the work directory and reads your repositories. Make sure there is enough free space, that the work directory is on storage you trust, and that you are allowed to restore that data to this machine. Restored files are removed afterwards, but this depends on the operating system and the antivirus software allowing it.
+- You are responsible for protecting your repository passwords, your configuration and the machine that runs BackupHarbor.
+- The binaries are not code-signed and you run them at your own risk; verify the checksums as described above.
+- BackupHarbor is an independent project. It is not affiliated with, endorsed by or supported by the restic project, Microsoft or any antivirus vendor; restic is a separate program under its own licence (see `THIRD-PARTY-NOTICES.md`).
 
 ## License
 
@@ -291,6 +318,23 @@ kısayolu ve `bharbor` için isteğe bağlı PATH girdisi sunar. Kaldırma sıra
 kurulum programının kendi eklediği PATH girdisi silinir; siz açıkça onaylamadıkça
 yapılandırmanız ve raporlarınız korunur.
 
+### SmartScreen ve antivirüs uyarıları
+
+Windows SmartScreen ya da antivirüs programınız `BackupHarbor-<sürüm>-setup.exe`, `BackupHarbor.exe`, `bharbor.exe` veya pakete dahil `restic.exe` için uyarı verebilir, dosyayı engelleyebilir ya da karantinaya alabilir. Bu tek başına dosyaların zararlı olduğu anlamına gelmez. Olası nedenler:
+
+- **Dosyalar kod imzalı değildir.** Kod imzalama sertifikaları ücretlidir ve BackupHarbor ücretsiz, açık kaynaklı bir projedir; bu yüzden Windows yayıncıyı tanıyamaz. SmartScreen ayrıca yeni ve az indirilen dosyaları itibara göre değerlendirir; bu nedenle her yeni sürüm, yeterince kişi çalıştırana kadar "bilinmeyen" görünür.
+- **Programlar, sezgisel (heuristic) tarayıcıların şüpheyle baktığı işler yapar;** ancak bunların her biri ürünün amacıdır: başka programları (restic) alt süreç olarak başlatır, çok sayıda dosya okur ve yazar, geçici geri yükleme klasörünü siler, Windows Görev Zamanlayıcı görevi oluşturur, parolaları Windows Kimlik Bilgisi Yöneticisi'nde saklar ve isteğe bağlı PATH girdisi için bir ortam ayarını değiştirir.
+- **Go ile yazılmış çalıştırılabilir dosyalar** zaman zaman genel veya makine öğrenmesi tabanlı tespitlerce işaretlenir. Aynısı, büyük miktarda veriyi okuyup çözen ve o da Go ile yazılmış olan restic için de geçerlidir.
+- Kurulum programı, bilinmeyen yayıncı sezgilerinin yakından incelediği bir biçim olan Inno Setup paketidir.
+
+Yapabilecekleriniz:
+
+1. Yalnızca [resmî sürümler sayfasından](https://github.com/Orevian/BackupHarbor/releases) indirin ve her dosyanın SHA-256 değerini `BackupHarbor-<sürüm>-SHA256SUMS.txt` ile karşılaştırın (`Get-FileHash .\dosya -Algorithm SHA256`). Değer farklıysa dosyayı çalıştırmayın.
+2. Paketteki `restic.exe`, değiştirilmemiş resmî sürümdür; `third_party/restic/PIN` içindeki sürüm için [restic projesinin](https://github.com/restic/restic/releases) yayımladığı sağlama toplamıyla karşılaştırabilirsiniz.
+3. Ya da kaynak kodu okuyup `scripts\build.ps1` ile kendiniz derleyin; çalışma sırasında hiçbir şey indirilmez ve depoda çalıştırılabilir dosya bulunmaz.
+4. SmartScreen "Windows bilgisayarınızı korudu" gösterirse, yalnızca sağlama toplamı eşleştikten sonra **Ek bilgi** ve ardından **Yine de çalıştır**'ı seçin. Sağlama toplamı eşleşen bir dosya antivirüs tarafından karantinaya alındıysa, dosyayı karantinadan geri yükleyin ya da tespiti yanlış alarm olarak üreticiye bildirin; istisna eklerseniz bunu tüm sürücü yerine yalnızca BackupHarbor kurulum klasörüyle sınırlayın.
+5. Emin değilseniz çalıştırmayın. Hiç kimse, bir README istediği için korumasını düşürmemelidir.
+
 ## Hızlı başlangıç
 
 Komut satırı:
@@ -388,6 +432,16 @@ duman testi `tools/uidev` altındadır (bkz. [CONTRIBUTING.md](CONTRIBUTING.md))
 - Açılan veya ayrıştırılan bir dosya, onu kullanan uygulamanın çalışacağını kanıtlamaz; PDF denetimleri yalnızca yapıseldir.
 - İkili dosyalar kod imzalı değildir; Windows SmartScreen ilk açılışta uyarabilir.
 - Bu README'deki ekran görüntüleri, Windows 11'de gerçek `BackupHarbor.exe` penceresinden, tarafsız bir sürücü harfindeki geçici restic depolarını doğrularken alınmıştır. Başarısız ve çalıştırılamadı sonuçlarını göstermek için depolardan biri bilerek bozulmuş, biri ise hiç oluşturulmamıştır; veriler gerçek bir yedek değil, test verisidir. Raporlar sayfasındaki tarih alanları BackupHarbor'ın değil, Windows'un diline uyar.
+
+## Sorumluluk reddi
+
+BackupHarbor, [MIT lisansı](LICENSE) koşulları altında, hiçbir türde garanti verilmeksizin "olduğu gibi" sunulur; yazarlar ve katkıda bulunanlar, kullanımından veya ürettiği uyarı, sonuç ve raporlardan doğabilecek hiçbir zarardan, veri kaybından, kesintiden ya da başka sonuçtan sorumlu değildir.
+
+- Başarılı sonucu yalnızca listelenen kontrollerin o anda geçtiği anlamına gelir. Uygulamalarınızın geri yüklenen verilerle çalışacağını, her dosyanın sağlam olduğunu veya gelecekteki yedeklerin başarılı olacağını kanıtlamaz. BackupHarbor sağlam bir yedekleme stratejisinin (birden çok kopya, uzak konumda bir kopya, düzenli elle örnek kontroller) yerine geçmez, onu tamamlar.
+- Doğrulama gerçek verileri çalışma dizinine geri yükler ve depolarınızı okur. Yeterli boş alan olduğundan, çalışma dizininin güvendiğiniz bir depolamada bulunduğundan ve bu verileri bu bilgisayara geri yüklemeye yetkili olduğunuzdan emin olun. Geri yüklenen dosyalar sonradan silinir; ancak bu, işletim sisteminin ve antivirüs yazılımının buna izin vermesine bağlıdır.
+- Depo parolalarınızı, yapılandırmanızı ve BackupHarbor'ı çalıştıran bilgisayarı korumak sizin sorumluluğunuzdadır.
+- İkili dosyalar kod imzalı değildir ve kendi sorumluluğunuzda çalıştırılır; sağlama toplamlarını yukarıda anlatıldığı gibi doğrulayın.
+- BackupHarbor bağımsız bir projedir. restic projesi, Microsoft veya herhangi bir antivirüs üreticisiyle bağlantılı değildir, onlar tarafından onaylanmamıştır ve desteklenmez; restic, kendi lisansı altında ayrı bir programdır (bkz. `THIRD-PARTY-NOTICES.md`).
 
 ## Lisans
 
