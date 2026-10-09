@@ -177,7 +177,7 @@ Note "BackupHarbor.exe resources: $($vi.ProductName) $($vi.ProductVersion), $($v
 Step 'Assembling the distribution folder'
 Copy-Item (Join-Path $Root 'LICENSE') $distDir
 Copy-Item (Join-Path $Root 'README.md') $distDir
-Copy-Item (Join-Path $Root 'README.tr.md') $distDir
+Copy-Item (Join-Path $Root 'screenshots') (Join-Path $distDir 'screenshots') -Recurse   # the README shows them inline
 Copy-Item (Join-Path $Root 'CHANGELOG.md') $distDir
 Copy-Item (Join-Path $Root 'SECURITY.md') $distDir
 Copy-Item $icon (Join-Path $distDir 'icon.ico')
