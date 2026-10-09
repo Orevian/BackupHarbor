@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="BackupHarbor">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#14a395"/>
+      <stop offset="1" stop-color="#0b5550"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#g)"/>
+  <path d="M64 28 A36 36 0 1 1 30.7 50.2" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round"/>
+  <path d="M20.5 46 L40.9 54.4 L37.6 33.6 Z" fill="#fff" stroke="#fff" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M46 66 L59 79 L84 51" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
