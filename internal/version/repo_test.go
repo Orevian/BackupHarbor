@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -39,7 +40,7 @@ func TestVersionFileMatchesCode(t *testing.T) {
 
 func TestRequiredProjectFilesExist(t *testing.T) {
 	for _, f := range []string{
-		"README.md", "README.tr.md", "LICENSE", "CHANGELOG.md", "CONTRIBUTING.md", "SECURITY.md", ".gitignore", ".editorconfig",
+		"README.md", "LICENSE", "CHANGELOG.md", "CONTRIBUTING.md", "SECURITY.md", ".gitignore", ".editorconfig",
 		"docs/architecture.md", "docs/configuration.md", "docs/security.md", "docs/report-schema.md",
 		".github/pull_request_template.md", ".github/RELEASE_TEMPLATE.md", ".github/workflows/ci.yml", ".github/workflows/release.yml",
 		".github/ISSUE_TEMPLATE/bug_report.yml", ".github/ISSUE_TEMPLATE/feature_request.yml",
@@ -171,5 +172,36 @@ func TestResticPinIsConsistent(t *testing.T) {
 	n, _ := os.ReadFile(filepath.Join(root, "THIRD-PARTY-NOTICES.md"))
 	if !strings.Contains(string(n), "restic") {
 		t.Error("THIRD-PARTY-NOTICES.md does not mention restic")
+	}
+}
+
+// The README is a single bilingual file (English first, Turkish below) whose screenshots live in the
+// top-level screenshots folder and are shown inline.
+func TestReadmeIsSingleBilingualFileWithInlineScreenshots(t *testing.T) {
+	root := repoRoot(t)
+	if _, err := os.Stat(filepath.Join(root, "README.tr.md")); err == nil {
+		t.Error("README.tr.md must not exist; the Turkish text belongs in README.md below the English text")
+	}
+	b, err := os.ReadFile(filepath.Join(root, "README.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(b)
+	en := strings.Index(text, "## The problem")
+	tr := strings.Index(text, "## Sorun")
+	if en < 0 || tr < 0 || en > tr {
+		t.Fatalf("README.md must contain the English text before the Turkish text (English at %d, Turkish at %d)", en, tr)
+	}
+	refs := regexp.MustCompile(`screenshots/[A-Za-z0-9._-]+\.png`).FindAllString(text, -1)
+	if len(refs) < 8 {
+		t.Errorf("README.md shows only %d screenshots", len(refs))
+	}
+	if strings.Contains(text, "docs/screenshots") {
+		t.Error("README.md must not point into docs/screenshots")
+	}
+	for _, ref := range refs {
+		if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(ref))); err != nil {
+			t.Errorf("README.md references %s, which does not exist", ref)
+		}
 	}
 }
