@@ -1,0 +1,29 @@
+1 ICON "@ICON@"
+1 24 "@MANIFEST@"
+@EXTRA@
+
+1 VERSIONINFO
+FILEVERSION @VERSION_COMMA@
+PRODUCTVERSION @VERSION_COMMA@
+FILEOS 0x40004
+FILETYPE 0x1
+{
+  BLOCK "StringFileInfo"
+  {
+    BLOCK "040904B0"
+    {
+      VALUE "CompanyName", "BackupHarbor contributors"
+      VALUE "FileDescription", "@DESCRIPTION@"
+      VALUE "FileVersion", "@VERSION@"
+      VALUE "InternalName", "@INTERNAL@"
+      VALUE "LegalCopyright", "Copyright (c) BackupHarbor contributors. MIT License."
+      VALUE "OriginalFilename", "@FILENAME@"
+      VALUE "ProductName", "BackupHarbor"
+      VALUE "ProductVersion", "@VERSION@"
+    }
+  }
+  BLOCK "VarFileInfo"
+  {
+    VALUE "Translation", 0x409, 1200
+  }
+}
