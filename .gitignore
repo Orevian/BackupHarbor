@@ -1,0 +1,25 @@
+# Build output
+/dist/
+/bin/
+*.exe
+*.test
+*.out
+*.syso
+/coverage.*
+
+# Editors and OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
+
+# Local configuration, secrets and reports must never be committed
+/config.yaml
+*.local.yaml
+*.pw
+*.password
+/reports/
+/work/
+
+# Node tooling used only by tools/uidev
+node_modules/
