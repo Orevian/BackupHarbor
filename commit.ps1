@@ -78,13 +78,14 @@ if (-not $hasRepo -and $DryRun) {
 }
 
 # NOTE: the helpers must not be named "Git": command lookup is case-insensitive and would recurse.
+# --no-pager: never open "less" (it would wait for a key press); core.safecrlf=false: no per-file LF/CRLF noise.
 function Invoke-Git {
-    & $script:GitExe @script:GitPrefix @args
+    & $script:GitExe --no-pager -c core.safecrlf=false @script:GitPrefix @args
     if ($LASTEXITCODE -ne 0) { Fail ("git " + ($args -join ' ') + " failed with exit code $LASTEXITCODE") }
 }
 function Invoke-GitOut {
     $old = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
-    try { return (& $script:GitExe @script:GitPrefix @args 2>$null) } finally { $ErrorActionPreference = $old }
+    try { return (& $script:GitExe --no-pager -c core.safecrlf=false @script:GitPrefix @args 2>$null) } finally { $ErrorActionPreference = $old }
 }
 
 # ---- repository, remote, identity -------------------------------------------------------------
